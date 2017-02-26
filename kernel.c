@@ -29,14 +29,19 @@ void printHelloWorld(int row, int col, int color, int bg);
 void printString(int row, int col, int color, int bg, char* s);
 void printStringCenter(int row, int ln, int color, int bg, char* s);
 void printLogo(int color, int bg);
+void printLogo2(int color, int bg);
 void delay(unsigned long time );
 
 int main() {
    clearScreen(CYAN);
-   //printHelloWorld(12, 34, WHITE, CYAN);
-   //printString(12, 35, WHITE, CYAN, "testing...");
-   printLogo(WHITE, CYAN);
-
+   printLogo2(WHITE, CYAN);
+   // delay(1000);
+   // clearScreen(CYAN);
+   // printString(12, 35, WHITE, CYAN, "loading...");
+   // delay(1000);
+   // clearScreen(CYAN);
+   // printHelloWorld(12, 34, WHITE, CYAN);
+   while(1);
    return 0;
 }
 
@@ -103,6 +108,18 @@ void printLogo(int color, int bg){
    printStringCenter(13,15,color,bg,"#####   #######");
    printStringCenter(14,15,color,bg,"######   #####");
    printStringCenter(15,15,color,bg,"#######    #");
+}
+void printLogo2(int color, int bg){
+   printStringCenter(7, 20, color, bg,"    __       __");
+   printStringCenter(8, 20, color, bg,"   / <`     '> \\");
+   printStringCenter(9, 20, color, bg,"  (  / @   @ \\  )");
+   printStringCenter(10, 20, color, bg,"   \\(_ _\\_/_ _)/");
+   printStringCenter(11, 20, color, bg," (\\ `-/     \\-' /)");
+   printStringCenter(12, 20, color, bg,"  \"===\\     /===\"");
+   printStringCenter(13, 20, color, bg,"   .==')___(`==.");
+   printStringCenter(14, 20, color, bg,"  ' .='     `=.");
+   printStringCenter(15, 20, color, bg,"       CrabOS");
+   printStringCenter(16, 20, color, bg,"Dery | Yano | Farhan");
 }
 void delay(unsigned int time){
     while  (time>0){
