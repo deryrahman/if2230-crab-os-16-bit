@@ -1,5 +1,5 @@
 /*
-   Author   : Dery Rahman A
+   Author   : Dery (13515097) | Yano (13515100) | Farhan (13515043)
    Date     : 21/02/2017
 */
 
@@ -29,18 +29,13 @@ void printHelloWorld(int row, int col, int color, int bg);
 void printString(int row, int col, int color, int bg, char* s);
 void printStringCenter(int row, int ln, int color, int bg, char* s);
 void printLogo(int color, int bg);
-void printLogo2(int color, int bg);
 void delay(unsigned long time );
 
 int main() {
    clearScreen(CYAN);
-   printLogo2(WHITE, CYAN);
-   // delay(1000);
-   // clearScreen(CYAN);
-   // printString(12, 35, WHITE, CYAN, "loading...");
-   // delay(1000);
-   // clearScreen(CYAN);
-   // printHelloWorld(12, 34, WHITE, CYAN);
+   //printHelloWorld(12, 34, WHITE, BLUE);
+   //printString(12, 27, WHITE, CYAN, "Lorem ipsum dolor sit amet");
+   printLogo(WHITE, CYAN);
    while(1);
    return 0;
 }
@@ -100,16 +95,6 @@ void printStringCenter(int row, int ln, int color, int bg, char* s){
    }
 }
 void printLogo(int color, int bg){
-   printStringCenter(8,15,color,bg,"############");
-   printStringCenter(9,15,color,bg,"##############");
-   printStringCenter(10,15,color,bg,"          #####");
-   printStringCenter(11,15,color,bg,"#######    ####");
-   printStringCenter(12,15,color,bg,"#######   #####");
-   printStringCenter(13,15,color,bg,"#####   #######");
-   printStringCenter(14,15,color,bg,"######   #####");
-   printStringCenter(15,15,color,bg,"#######    #");
-}
-void printLogo2(int color, int bg){
    printStringCenter(7, 20, color, bg,"    __       __");
    printStringCenter(8, 20, color, bg,"   / <`     '> \\");
    printStringCenter(9, 20, color, bg,"  (  / @   @ \\  )");
@@ -120,13 +105,4 @@ void printLogo2(int color, int bg){
    printStringCenter(14, 20, color, bg,"  ' .='     `=.");
    printStringCenter(15, 20, color, bg,"       CrabOS");
    printStringCenter(16, 20, color, bg,"Dery | Yano | Farhan");
-}
-void delay(unsigned int time){
-    while  (time>0){
-        int i = 1333333; // equivalent to 100 ms
-        while (i>0){
-            i--;
-        }
-        time--;
-    }
 }
