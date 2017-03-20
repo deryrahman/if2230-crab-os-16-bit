@@ -7,6 +7,7 @@
 	.global _interrupt
 	.global _makeInterrupt21
 	.global _launchProgram
+	.global _terminate
 	.extern _handleInterrupt21
 
 ;void putInMemory (int segment, int address, char character)
@@ -83,8 +84,9 @@ _interrupt21ServiceRoutine:
 ;this is called to start a program that is loaded into memory
 ;void launchProgram(int segment)
 _launchProgram:
+	push bp
 	mov bp,sp
-	mov bx,[bp+2]	;get the segment into bx
+	mov bx,[bp+4]	;get the segment into bx
 
 	mov ax,cs	;modify the jmp below to jump to our segment
 	mov ds,ax	;this is self-modifying code
@@ -94,8 +96,32 @@ _launchProgram:
 	mov ds,bx	;set up the segment registers
 	mov ss,bx
 	mov es,bx
+	
+	mov ax, bp
+	mov bx, sp
 
 	mov sp,#0xfff0	;set up the stack pointer
 	mov bp,#0xfff0
+	
+	push ax
+	push bx
 
-jump:	jmp #0x0000:0x0000	;and start running (the first 0000 is changed above)
+jump:	call #0x0000:0x0000	;and start running (the first 0000 is changed above)
+	pop bp
+	ret
+_terminate:
+	mov bx, [0xffe8]
+	mov sp, [0xffec]
+	mov bp, [0xffee]
+	
+	mov ax,cs
+	mov ds,ax
+	mov si,#jump_back
+	mov [si+1],bx
+	
+	mov ax,#0x1000
+	mov ds,ax
+	mov ss,ax
+	mov es,ax
+	
+jump_back:	jmp #0x1000:0x0000

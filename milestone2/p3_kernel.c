@@ -1,18 +1,3 @@
-/* Operating System
-   Copyright 2013 Meredith Myers
-
-   Licensed under the Apache License, Version 2.0 (the "License");
-   you may not use this file except in compliance with the License.
-   You may obtain a copy of the License at
-
-       http://www.apache.org/licenses/LICENSE-2.0
-
-   Unless required by applicable law or agreed to in writing, software
-   distributed under the License is distributed on an "AS IS" BASIS,
-   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-   See the License for the specific language governing permissions and
-   limitations under the License. */
-
 void printString(char*);
 void readString(char*);
 void readSector(char* buffer, int sector);
@@ -33,15 +18,20 @@ void clear(char*,int);
 
 main(){
 	char buffer[13312];
-	makeInterrupt21();
-	/*read the file into buffer*/
-	interrupt(0x21, 0x03, "messag\0", buffer, 0);
-	/*print out the file*/
-	interrupt(0x21, 0x00, buffer, 0, 0);
-	interrupt(0x21, 4, "shell\0", 0x2000, 0);	
-
+    char buff[10000];
     while(1){
-
+    	printString("shell> ");
+    	readString(buffer);
+    	if(buffer[0]=='t' && buffer[1]=='y' && buffer[2]=='p' && buffer[3]=='e' && buffer[4]==' '){
+    		readFile(buffer+5,buff);
+    		printString("\n\r");
+    		printString(buff);
+    	} else if(buffer[0]=='e' && buffer[1]=='x' && buffer[2]=='e' && buffer[3]=='c' && buffer[4]=='u' && buffer[5]=='t' && buffer[6]=='e' && buffer[7]==' '){
+    		printString("\n\r");
+    		executeProgram(buffer+8,0x2000);
+    	}
+    	
+    	printString("\n\r");
     }
 } 
 
@@ -121,18 +111,6 @@ void executeProgram(char* name, int segment){
 	} 
 
 	launchProgram(segment);
-
-}
-
-void terminate(){
-	char shell[6];
-	shell[0] = 's';
-	shell[1] = 'h';
-	shell[2] = 'e';
-	shell[3] = 'l';
-	shell[4] = 'l';
-	shell[5] = 0x0;
-	interrupt(0x21,4,shell,0x2000,0);
 }
 
 void getDirectory(){
@@ -456,7 +434,7 @@ void readString(char* buff){
     int backsp = 0x8;
     int dashr = 0xd;
     int loop = 1;
-    int count = 2;
+    int count = 0;
     buff[0] = dashr;
     buff[1] = dashn;
     while(loop){
