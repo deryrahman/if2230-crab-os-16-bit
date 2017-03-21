@@ -13,9 +13,9 @@ gcc -o loadFile loadFile.c
 ./loadFile message.txt
 
 # kernel default
-#bcc -ansi -c -o kernel.o kernel.c
-#ld86 -o kernel -d kernel.o kernel_asm.o
-#dd if=kernel of=floppya.img bs=512 conv=notrunc seek=3
+bcc -ansi -c -o kernel.o kernel.c
+ld86 -o kernel -d kernel.o kernel_asm.o
+dd if=kernel of=floppya.img bs=512 conv=notrunc seek=3
 
 # p2
 #bcc -ansi -c -o p2_kernel.o p2_kernel.c
@@ -31,6 +31,6 @@ gcc -o loadFile loadFile.c
 #dd if=p3_kernel of=floppya.img bs=512 conv=notrunc seek=3
 
 # p4
-bcc -ansi -c -o p4_kernel.o p4_kernel.c
-ld86 -o p4_kernel -d p4_kernel.o kernel_asm.o
-dd if=p4_kernel of=floppya.img bs=512 conv=notrunc seek=3
+#bcc -ansi -c -o p4_kernel.o p4_kernel.c
+#ld86 -o p4_kernel -d p4_kernel.o kernel_asm.o
+#dd if=p4_kernel of=floppya.img bs=512 conv=notrunc seek=3

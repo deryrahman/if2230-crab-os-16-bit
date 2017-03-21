@@ -1,16 +1,20 @@
-#define PRINT_STRING 0
-#define READ_STRING 1
-#define READ_SECTOR 2
-#define READ_FILE 3
-#define EXECUTE 4
-#define TERMINATE 5
-#define WRITE_SECTOR 6
-#define DELETE_FILE 7
-#define WRITE_FILE 8
-#define GET_DIR 9
+/* Operating System
+   Copyright 2013 Meredith Myers
+
+   Licensed under the Apache License, Version 2.0 (the "License");
+   you may not use this file except in compliance with the License.
+   You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+   Unless required by applicable law or agreed to in writing, software
+   distributed under the License is distributed on an "AS IS" BASIS,
+   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+   See the License for the specific language governing permissions and
+   limitations under the License. */
 
 void printString(char*);
-int readString(char*);
+void readString(char*);
 void readSector(char* buffer, int sector);
 void writeSector(char* buffer, int sector);
 int mod(int a, int b);
@@ -28,87 +32,164 @@ void getDirectory();
 void clear(char*,int);
 
 main(){
-	char buffer[13312];
-    char buff[10000];
+	int i;
+	char buff[13312];
+	char b[512];
+	makeInterrupt21();
 
-    makeInterrupt21();
+	interrupt(0x21, 4, "shell\0", 0x2000, 0);	
+
     while(1){
-    	interrupt(0x21, PRINT_STRING, "\rshell> ", 0, 0);
-    	interrupt(0x21, READ_STRING, buffer, 0, 0);
-    	if(buffer[0]=='t' && buffer[1]=='y' && buffer[2]=='p' && buffer[3]=='e' && buffer[4]==' '){
-    		interrupt(0x21, READ_FILE, buffer+5, buff, 0);
-    		interrupt(0x21, PRINT_STRING, buff, 0, 0);
-    	} else if(buffer[0]=='e' && buffer[1]=='x' && buffer[2]=='e' && buffer[3]=='c' && buffer[4]=='u' && buffer[5]=='t' && buffer[6]=='e' && buffer[7]==' '){
-    		interrupt(0x21, EXECUTE, buffer+8, 0x2000, 0);
-    	} else if(buffer[0]=='d' && buffer[1]=='e' && buffer[2]=='l' && buffer[3]=='e' && buffer[4]=='t' && buffer[5]=='e' && buffer[6]==' '){
-    		interrupt(0x21, DELETE_FILE, buffer+7, 0, 0);
-    	} else if(buffer[0]=='d' && buffer[1]=='i' && buffer[2]=='r'){
-    		interrupt(0x21, GET_DIR, 0, 0, 0);
-    	} else if(buffer[0]=='c' && buffer[1]=='r' && buffer[2]=='e' && buffer[3]=='a' && buffer[4]=='t' && buffer[5]=='e' && buffer[6]==' '){
-    		interrupt(0x21, WRITE_FILE, buffer+7, 0, 1);
-    	} else {
-    		interrupt(0x21, PRINT_STRING, "Infailed command!\n\r", 0, 0);
-    	}
+
     }
+} 
+
+void handleInterrupt21 (int AX, int BX, int CX, int DX){
+		int ah;
+	
+		ah = AX >> 8;
+
+		if (ah == 9){
+			interrupt(0x10, 0xe*256+'H', 0, 0, 0);
+			interrupt(0x10, 0xe*256+'e', 0, 0, 0);
+			interrupt(0x10, 0xe*256+'l', 0, 0, 0);
+			interrupt(0x10, 0xe*256+'l', 0, 0, 0);
+			interrupt(0x10, 0xe*256+'o', 0, 0, 0);
+			interrupt(0x10, 0xe*256+' ', 0, 0, 0);
+			interrupt(0x10, 0xe*256+'W', 0, 0, 0);
+			interrupt(0x10, 0xe*256+'o', 0, 0, 0);
+			interrupt(0x10, 0xe*256+'r', 0, 0, 0);
+			interrupt(0x10, 0xe*256+'l', 0, 0, 0);
+			interrupt(0x10, 0xe*256+'d', 0, 0, 0);
+			interrupt(0x10, 0xe*256+'!', 0, 0, 0);
+		}
+		else if (ah == 0x4C){
+			terminate();
+		}
+	
+        if (AX == 0){
+            printString(BX);
+        }
+        else if (AX ==1){
+            readString(BX);
+        }
+        else if(AX == 2){
+			/* Buffer, sector */
+            readSector(BX,30);
+        }
+		else if (AX == 3){
+			/* Filename, buffer*/
+			readFile(BX, CX);
+		}
+		else if (AX == 4){
+			/* Program name, segment number */
+			executeProgram(BX,CX);
+		}
+		else if (AX == 5){
+			terminate();
+		}
+		else if (AX == 6){
+			/* BX - address of char array, CX- sector number*/
+			writeSector(BX,CX);
+		}
+		else if (AX == 7){
+			deleteFile(BX);
+		}
+		else if (AX == 8){
+			/* BX = address of character array holding the file name, CX = address of character array holding the file to be written, DX = number of sectors */
+			writeFile(BX, CX, DX);
+		}
+		else if (AX == 9){
+			getDirectory();
+		}
+		else {
+            printString("Invalid interrupt!\0");
+        }
 }
 
-void handleInterrupt21 (int AX, int BX, int CX, int DX){	
-        if (AX == 0) printString(BX);
-        else if (AX ==1) readString(BX);
-        else if(AX == 2) readSector(BX,30);
-		else if (AX == 3) readFile(BX, CX);
-		else if (AX == 4) executeProgram(BX,CX);
-		else if (AX == 5) terminate();
-		else if (AX == 6) writeSector(BX,CX);
-		else if (AX == 7) deleteFile(BX);
-		else if (AX == 8) writeFile(BX, CX, DX);
-		else if (AX == 9) getDirectory();
-		else printString("Invalid interrupt!\0");
-}
 
 void executeProgram(char* name, int segment){ 
 	int i;
 	int address;
 	char readingBuffer[13312];
+
 	readFile(name, readingBuffer);
-	for (i=0; i<13312;i++)
+
+	for (i=0; i<13312;i++){
 		putInMemory(segment,i,readingBuffer[i]);
+	} 
+
 	launchProgram(segment);
+
 }
 
+/*
+void terminate(){
+	char shell[6];
+	shell[0] = 's';
+	shell[1] = 'h';
+	shell[2] = 'e';
+	shell[3] = 'l';
+	shell[4] = 'l';
+	shell[5] = 0x0;
+	interrupt(0x21,4,shell,0x2000,0);
+}*/
+
 void getDirectory(){
-	char buffer[512];
-	char file[7];
+	char buff[512];
+	char dirBuff[512];
 	int i,j;
-	
-	file[6] = 0;
-	readSector(buffer, 2);
-	for (i = 0; i < 16; i++)
-		if (buffer[i*32] != 0) {
-			for (j = 0; j < 6; j++) {
-				file[j] = buffer[i*32+j] != 0 ? buffer[32*i+j] : ' ';
+	int index = 0;
+	for(i=0;i<512;i++){
+		buff[i] = 0x0;
+		dirBuff[i]=0x0;
+	}
+	/* Read in the directory sector */
+    readSector(dirBuff, 2); 
+	/* Look through the directory for files */
+	for(i=0;i<16;i++){
+		 /* If there is a file at the location */
+		if (dirBuff[32*i] != 0x0){
+			/* Check the first characters */
+			for (j=0; j < 6; j++){
+				buff[index] = dirBuff[j+32*i];
+				index++;
 			}
-			printString(file);
-			printString("\n\r");
+			/* Add some formatting */
+			buff[index] = '\r';
+			index++;
+			buff[index] = '\n';
+			index++;
 		}
+	}
+	for(i=0;i<512;i++){
+		printChar(buff[i]);
+	}
+	return;
+	
 }
 
 /* BX = address of character array holding the file name, CX = address of character array holding the file to be written, DX = number of sectors */
 void writeFile(char* name,char* buffer, int numberOfSectors) {
-	char map[512], directory[512], content[10240], subBuff[512];
+	char map[512];
+	char directory[512];
 	int directoryLine,j,k, index, diff;
-	int nameLen, sectorNum;
+	int nameLen = 0;
+	int sectorNum;
+	char subBuff[512];
 	int iterator = 0;
 	int foundFree = 0;
 	int nameInts[7];
 	int i,h;
 	int kVal;
 
+	/*1.Load the Map and Directory sectors into buffers*/
 	readSector(map,1);
 	readSector(directory,2);
 	
-	// mencari directory yang kosong
-    for (directoryLine = 0; directoryLine < 16; directoryLine++){
+	/*2.Find a free directory entry (one that begins with 0x00)*/
+     	for (directoryLine = 0; directoryLine < 16; directoryLine++){
+		 /* If there isnt a file at the location */
 		if (directory[32*directoryLine] == 0x00){
 			foundFree = 1;
 			break;
@@ -119,22 +200,28 @@ void writeFile(char* name,char* buffer, int numberOfSectors) {
 		return;
 	}
 
-	if (strComp(directory, name) > -1) {
-		printString("File already exists!\n\r\0");
-		return;
+	/*3.Copy the name to that directory entry.  If the name is less than 6 bytes, fill in the remaining bytes with 0x00*/
+	/* Get the name length */	
+	while(name[nameLen] != '\0' && name[nameLen] != 0x0){
+		nameLen++;
+	}
+	/* Write in the name*/
+	for (j=0;j<nameLen;j++){
+		directory[32*directoryLine+j] = name[j];
+	}
+	/* Check if the file name is less than 6 chars. If so, fill the remainder with 0x0s */
+	if (nameLen < 6){
+		diff = 6-nameLen;
+		for(j=0;j<diff;j++){
+			index = j+nameLen;
+			directory[32*directoryLine+index] = 0x0;
+		}
 	}
 
-	// memasukan nama file ke 6bit pertama pada directory yang kosong
-	nameLen = 0;
-	while(name[nameLen] != 0x0) nameLen++;
-	for (j=0;j<6;j++){
-		directory[32*directoryLine+j] = (j<nameLen) ? name[j] : 0x0;
-	}
-
-	// membuat file
+	/*4.For each sector making up the file:*/
 	for (k = 0; k < numberOfSectors; k++){
 
-		// mencari sector yang kosong dalam map
+		/*5.Find a free sector by searching through the Map for a 0x00*/
 		sectorNum = 0;
 		while(map[sectorNum] != 0x0){
 			sectorNum++;
@@ -144,53 +231,79 @@ void writeFile(char* name,char* buffer, int numberOfSectors) {
 			printString("Not enough space in directory entry for file\n");
 			return;
 		}
-		// set 0xFF kedalam map
-
+		/*6.Set that sector to 0xFF in the Map*/
 		map[sectorNum] = 0xFF;
-		
-		// tambahkan nomor sector kedalam directory
+		/*7.Add that sector number to the file's directory entry*/
 		directory[32*directoryLine+6+k] = sectorNum;
-
-		i = 0;
-		while ((j = readString(content+i)) > 0) {
-			content[j+i] = '\n';
-			content[j+i+1] = '\r';
-			i += (j + 2);
+		/*8.Write 512 bytes from the buffer holding the file to that sector*/
+		for(j=0;j<512;j++){
+			kVal = k+1;
+			subBuff[j] = buffer[j*kVal];
 		}
-		content[i] = 0;
-
-		writeSector(content,sectorNum);
+		writeSector(subBuff,sectorNum);
 	}
-	// masukan map dan directory kedalam disk
+	/*9.Fill in the remaining bytes in the directory entry to 0x00*/
+	/*for(j=0;j<32-numberOfSectors;j++){*/
+	
+	/*10.Write the Map and Directory sectors back to the disk*/
 	writeSector(map,1);
 	writeSector(directory,2);
 }
 
 void deleteFile(char* name){
-	char map[512], directory[512];
+	char map[512];
+	char directory[512];
+	int sectors[27];
+	int sectorCount = 0;
 	int i, j, k, fileFound, index;
+	int sectNum;
+	int sector;
 	
+	/*1.Load the Directory and Map to 512 byte character arrays*/
 	readSector(map,1);
 	readSector(directory,2);
 
+
+	/*2.Search through the directory and try to find the file name.*/
 	fileFound = strComp(directory,name);
 
-	if (fileFound){
-		// set 6 bytes pertama menjadi 0x00
+	if (fileFound!=0){
+
+		/*3. Clear the directory. Set the first byte of the file name to 0x00.*/
+		
 		for(i=0;i<6;i++){
 			directory[fileFound*32+i] = 0x00;
 		}
-		// set 26 bytes selanjutnya menjadi 0x00 dan map
+		index = fileFound*32+6;
 		for (j=0;j<26;j++){
-			index = directory[fileFound*32+6+j];
-			if(index != 0) map[index] = 0x00;
-			directory[fileFound*32+6+j] = 0x00;
+		/*while(directory[index]!=0x0){*/
+			sectors[j] = directory[index+j];
+			directory[index+j] = 0x00;
+			sectorCount++;
+			/*index++;*/
+		
+		}
+		sectors[26] = 0x0;
+
+		/*4.Step through the sectors numbers listed as belonging to the file.  For each sector, set the corresponding Map byte to 0x00.  For example, 
+		 if sector 7 belongs to the file, set the 7th Map byte to 0x00 (actually you should set the 8th, since the Map starts at sector 0).*/
+
+
+		for(k=0;k<sectorCount;k++){
+			sector = sectors[k];
+			if(sector == 0){
+				break;
+			}
+
+			map[sector] = 0x00;
+
 		}
 	}
 	else{
 		printString("File not found!");
 	}
 	
+	/*5.Write the character arrays holding the Directory and Map back to their appropriate sectors.*/
 	writeSector(map,1);
 	writeSector(directory,2);
 }
@@ -303,10 +416,21 @@ int strComp(char* buffer, char* fileName){
 			}
 			else{
 				/*printString("Next check");*/
+			
 			}
 		}
-	}
-	return -1;
+		}
+			 if (checkFound == 0){
+				 for (i=0;i<13312;i++){
+					buffer[i] = 0x0;
+				 }
+				
+				 
+				return 0;
+			 }
+
+	 
+
 }
 
 int mod(int a, int b){
@@ -325,14 +449,14 @@ int div(int a, int b){
 
 }
 
-int readString(char* buff){
+void readString(char* buff){
     int dashn = 0xa;
     int endStr = 0x0;
     int enter = 0xd;
     int backsp = 0x8;
     int dashr = 0xd;
     int loop = 1;
-    int count = 0;
+    int count = 2;
     buff[0] = dashr;
     buff[1] = dashn;
     while(loop){
@@ -342,13 +466,11 @@ int readString(char* buff){
             if (ascii == enter){              
 				buff[count] = 0x0;
                 buff[count+1] = dashr;
-                interrupt(0x10, 0xe*256+buff[count+1], 0, 0, 0);
                 buff[count+2] = dashn;
-                interrupt(0x10, 0xe*256+buff[count+2], 0, 0, 0);
-                return count;
+                return;
             }
             else if (ascii == backsp){
-                if (count > 0){
+                if (count > 1){
                     buff[count] = 0x0;
                     count--;
                     interrupt(0x10,0xe*256+0x8,0,0,0);
@@ -365,7 +487,6 @@ int readString(char* buff){
                 count++;
             }     
     }
-    return 0;
 }
     
 void printString(char* chars){
